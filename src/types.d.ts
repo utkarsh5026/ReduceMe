@@ -110,12 +110,19 @@ type Listener = () => void;
  * //   addAmount: ActionCreator<number>
  * // }
  */
+// type ActionCreatorsFromCaseReducers<C extends SliceCaseReducerMap<any>> = {
+//   [K in keyof C]: C[K] extends (state: any) => any
+//     ? ActionCreator<void>
+//     : C[K] extends (state: any, action: infer A) => any
+//     ? A extends Action<infer P>
+//       ? ActionCreator<P>
+//       : never
+//     : never;
+// };
 type ActionCreatorsFromCaseReducers<C extends SliceCaseReducerMap<any>> = {
-  [K in keyof C]: C[K] extends (state: any) => any
-    ? ActionCreator<void>
-    : C[K] extends (state: any, action: infer A) => any
+  [K in keyof C]: C[K] extends (state: any, action: infer A) => any
     ? A extends Action<infer P>
       ? ActionCreator<P>
-      : never
-    : never;
+      : ActionCreator<void>
+    : ActionCreator<void>;
 };
