@@ -18,7 +18,7 @@ describe("createSlice", () => {
       decrement: (state: State) => {
         state.value -= 1;
       },
-      addByAmount: (state: State, action: Action) => {
+      addByAmount: (state: State, action: Action<number>) => {
         state.value += action.payload;
       },
     },
