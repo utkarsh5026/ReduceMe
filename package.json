@@ -1,7 +1,7 @@
 {
   "name": "reduceme",
-   "description": "A Redux-like state management library built with TypeScript",
-  "version": "1.0.0",
+  "description": "A Redux-like state management library built with TypeScript",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
