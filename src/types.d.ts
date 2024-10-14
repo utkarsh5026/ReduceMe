@@ -126,3 +126,8 @@ type ActionCreatorsFromCaseReducers<C extends SliceCaseReducerMap<any>> = {
       : ActionCreator<void>
     : ActionCreator<void>;
 };
+
+interface Reduce<State> {
+  initialState: State;
+  reducer: Reducer<State>;
+}

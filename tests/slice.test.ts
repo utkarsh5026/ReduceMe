@@ -1,4 +1,5 @@
 import { createSlice } from "../src/slice";
+import { combineReducers, dispatch, Store } from "../src/store";
 import type { Action } from "../src/types";
 
 describe("createSlice", () => {
@@ -29,52 +30,67 @@ describe("createSlice", () => {
   });
 
   it("should initialize with the correct initial state", () => {
-    const state = slice.reducer(undefined, { type: "", payload: {} });
+    const state = slice.reducer.reducer(undefined, { type: "", payload: {} });
     expect(state).toEqual(initialState);
   });
 
   it("should handle increment action", () => {
-    const state = slice.reducer(initialState, slice.actions.increment());
+    const state = slice.reducer.reducer(
+      initialState,
+      slice.actions.increment()
+    );
     expect(state.value).toBe(1);
   });
 
   it("should handle decrement action", () => {
-    const state = slice.reducer({ value: 1 }, slice.actions.decrement());
+    const state = slice.reducer.reducer(
+      { value: 1 },
+      slice.actions.decrement()
+    );
     expect(state.value).toBe(0);
   });
 
   it("should handle addByAmount action", () => {
-    const state = slice.reducer(initialState, slice.actions.addByAmount(5));
+    const state = slice.reducer.reducer(
+      initialState,
+      slice.actions.addByAmount(5)
+    );
     expect(state.value).toBe(5);
   });
 
   it("should handle addByAmount action with negative value", () => {
-    const state = slice.reducer(initialState, slice.actions.addByAmount(-5));
+    const state = slice.reducer.reducer(
+      initialState,
+      slice.actions.addByAmount(-5)
+    );
     expect(state.value).toBe(-5);
   });
 
   it("should handle multiple increment actions", () => {
-    let state = slice.reducer(initialState, slice.actions.increment());
-    state = slice.reducer(state, slice.actions.increment());
+    let state = slice.reducer.reducer(initialState, slice.actions.increment());
+    state = slice.reducer.reducer(state, slice.actions.increment());
     expect(state.value).toBe(2);
   });
 
   it("should handle multiple decrement actions", () => {
-    let state = slice.reducer({ value: 2 }, slice.actions.decrement());
-    state = slice.reducer(state, slice.actions.decrement());
+    let state = slice.reducer.reducer({ value: 2 }, slice.actions.decrement());
+    state = slice.reducer.reducer(state, slice.actions.decrement());
     expect(state.value).toBe(0);
   });
 
   it("should handle a sequence of actions", () => {
-    let state = slice.reducer(initialState, slice.actions.increment());
-    state = slice.reducer(state, slice.actions.addByAmount(3));
-    state = slice.reducer(state, slice.actions.decrement());
+    let state = slice.reducer.reducer(initialState, slice.actions.increment());
+    state = slice.reducer.reducer(state, slice.actions.addByAmount(3));
+    state = slice.reducer.reducer(state, slice.actions.decrement());
     expect(state.value).toBe(3);
   });
 
   it("should not mutate the state directly", () => {
     const stateBefore = { value: 0 };
-    const stateAfter = slice.reducer(stateBefore, slice.actions.increment());
+    const stateAfter = slice.reducer.reducer(
+      stateBefore,
+      slice.actions.increment()
+    );
     expect(stateBefore).not.toBe(stateAfter);
   });
 });
@@ -113,7 +129,7 @@ describe("createSlice with complex state", () => {
   });
 
   it("should handle increment action and update history and metadata", () => {
-    const state = complexSlice.reducer(
+    const state = complexSlice.reducer.reducer(
       initialComplexState,
       complexSlice.actions.increment()
     );
@@ -123,11 +139,11 @@ describe("createSlice with complex state", () => {
   });
 
   it("should handle reset action and clear history", () => {
-    let state = complexSlice.reducer(
+    let state = complexSlice.reducer.reducer(
       initialComplexState,
       complexSlice.actions.increment()
     );
-    state = complexSlice.reducer(state, complexSlice.actions.reset());
+    state = complexSlice.reducer.reducer(state, complexSlice.actions.reset());
     expect(state.counter.value).toBe(0);
     expect(state.counter.history).toEqual([]);
     expect(state.metadata.lastUpdated).not.toBeNull();
