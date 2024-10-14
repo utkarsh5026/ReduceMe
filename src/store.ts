@@ -80,7 +80,6 @@ export class Store<State> {
   }
 }
 
-// Updated combineReducers function with inferred types
 /**
  * Combines multiple reducers into a single reducer function.
  *
