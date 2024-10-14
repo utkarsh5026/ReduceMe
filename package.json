@@ -1,5 +1,6 @@
 {
   "name": "reduceme",
+   "description": "A Redux-like state management library built with TypeScript",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -10,10 +11,9 @@
     "test": "jest",
     "build": "tsc"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["redux", "state management", "typescript"],
+  "author": "Utkarsh Priyadarshi",
   "license": "ISC",
-  "description": "",
   "dependencies": {
     "immer": "^10.1.1"
   },
