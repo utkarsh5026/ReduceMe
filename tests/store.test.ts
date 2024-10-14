@@ -1,6 +1,6 @@
 import { createSlice } from "../src/slice";
 import { Store } from "../src/store";
-import type { Action } from "../src/types";
+import type { Action, Middleware } from "../src/types";
 
 // Define a slice for testing
 const counterSlice = createSlice({
@@ -138,4 +138,59 @@ describe("Store with multiple slices", () => {
   });
 
   // Add more tests as needed for the new slice
+});
+
+const testReducer = (state = { count: 0 }, action: Action<any>) => {
+  switch (action.type) {
+    case "INCREMENT":
+      return { ...state, count: state.count + 1 };
+    default:
+      return state;
+  }
+};
+
+// A simple middleware for testing
+const loggerMiddleware: Middleware<any> = (store) => (next) => (action) => {
+  console.log("Dispatching:", action);
+  const result = next(action);
+  console.log("Next state:", store.state());
+  return result;
+};
+
+// A middleware to test if it modifies the action
+const modifyActionMiddleware: Middleware<any> = () => (next) => (action) => {
+  const modifiedAction = { ...action, type: "INCREMENT" };
+  return next(modifiedAction);
+};
+
+describe("Store with Middleware", () => {
+  it("should apply middleware and log actions", () => {
+    const consoleSpy = jest.spyOn(console, "log").mockImplementation();
+    const store = Store.create(
+      { test: { reducer: testReducer, initialState: { count: 0 } } },
+      [loggerMiddleware]
+    );
+
+    store.dispatch({ type: "INCREMENT", payload: 1 });
+
+    expect(consoleSpy).toHaveBeenCalledWith("Dispatching:", {
+      type: "INCREMENT",
+      payload: 1,
+    });
+    expect(consoleSpy).toHaveBeenCalledWith("Next state:", {
+      test: { count: 1 },
+    });
+
+    consoleSpy.mockRestore();
+  });
+
+  it("should modify action through middleware", () => {
+    const store = Store.create(
+      { test: { reducer: testReducer, initialState: { count: 0 } } },
+      [modifyActionMiddleware]
+    );
+
+    store.dispatch({ type: "UNKNOWN", payload: 1 });
+    expect(store.state()).toEqual({ test: { count: 1 } });
+  });
 });
