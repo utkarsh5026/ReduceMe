@@ -67,27 +67,47 @@ interface Slice<S, C extends ReducerMap<S>> {
 export function createSlice<S, C extends ReducerMap<S>>(
   options: CreateSliceOptions<S, C>
 ): Slice<S, C> {
-  const { name, initialState, reducers } = options;
+  const { name, initialState, reducers, extraReducers } = options;
   const actionCreators: Record<string, CreateAction<any>> = {};
-  const caseReducers: Record<string, ActionHandler<S, Action>> = {};
+  const actionHandlers: Record<string, ActionHandler<S, Action>> = {};
 
   // Create action creators and case reducers
-  Object.keys(reducers).forEach((key) => {
-    const actionType = `${name}/${key}`;
-    caseReducers[actionType] = reducers[key];
-    actionCreators[key] = ((payload?: any) => ({
+  Object.keys(reducers).forEach((reducerName) => {
+    const actionType = `${name}/${reducerName}`;
+    actionHandlers[actionType] = reducers[reducerName];
+    actionCreators[reducerName] = ((payload?: any) => ({
       type: actionType,
       payload,
     })) as CreateAction<any>;
   });
 
+  const builder = new ReducerBuilder<S>();
+  if (extraReducers) {
+    extraReducers(builder);
+    Object.assign(actionHandlers, builder.build());
+  }
+
   // Create the main reducer function
   const reducer = (state: S = initialState, action: Action): S => {
-    const handler = caseReducers[action.type];
-    if (!handler) return state;
-    return produce(state, (draftState) => {
-      handler(draftState, action);
-    });
+    const handler = actionHandlers[action.type];
+    if (handler)
+      return produce(state, (draftState) => {
+        handler(draftState, action);
+      });
+
+    for (const key in actionHandlers) {
+      if (key === ReducerBuilder.DEFAULT_ACTION_TYPE) {
+        const result = produce(state, (draftState) => {
+          actionHandlers[ReducerBuilder.DEFAULT_ACTION_TYPE](
+            draftState,
+            action
+          );
+        });
+        if (result !== state) return result;
+      }
+    }
+
+    return state;
   };
 
   return {
@@ -97,10 +117,24 @@ export function createSlice<S, C extends ReducerMap<S>>(
   };
 }
 
+/**
+ * A builder class for constructing reducers with extra cases and a default case.
+ * @template State The type of the state managed by the reducer.
+ */
 class ReducerBuilder<State> {
-  private extraReducers: Record<string, ActionHandler<State, Action<any>>> =
-    {};
+  /** The action type used for the default case. */
+  static DEFAULT_ACTION_TYPE = "DEFAULT";
 
+  /** A record of extra reducers, keyed by action type. */
+  private extraReducers: Record<string, ActionHandler<State, Action<any>>> = {};
+
+  /**
+   * Adds a case to the builder for a specific action.
+   * @template P The type of the action payload.
+   * @param actionCreator A function that creates an action of type P.
+   * @param reducer A function that handles the state change for this action.
+   * @returns The builder instance for chaining.
+   */
   addCase<P = any>(
     actionCreator: CreateAction<P>,
     reducer: ActionHandler<State, Action<P>>
@@ -110,14 +144,23 @@ class ReducerBuilder<State> {
     return this;
   }
 
+  /**
+   * Builds and returns the final record of extra reducers.
+   * @returns A record of action handlers, keyed by action type.
+   */
   build(): Record<string, ActionHandler<State, Action<any>>> {
     return this.extraReducers;
   }
 
+  /**
+   * Adds a default case to the builder.
+   * @param reducer A function that handles the state change for any unmatched action.
+   * @returns The builder instance for chaining.
+   */
   addDefaultCase(
     reducer: ActionHandler<State, Action<any>>
   ): ReducerBuilder<State> {
-    this.extraReducers["DEFAULT"] = reducer;
+    this.extraReducers[ReducerBuilder.DEFAULT_ACTION_TYPE] = reducer;
     return this;
   }
 }
