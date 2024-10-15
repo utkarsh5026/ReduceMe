@@ -1,11 +1,11 @@
 import { produce } from "immer";
 import type {
   Action,
-  ActionCreator,
-  CaseReducerFunction,
-  SliceCaseReducerMap,
+  CreateAction,
+  ActionHandler,
+  ReducerMap,
   ActionCreatorsFromCaseReducers,
-  Reduce,
+  StateReducerConfig,
 } from "./types";
 
 /**
@@ -13,10 +13,11 @@ import type {
  * @template S The type of the slice state.
  * @template C The type of the case reducers, extending SliceCaseReducerMap<S>.
  */
-interface CreateSliceOptions<S, C extends SliceCaseReducerMap<S>> {
+interface CreateSliceOptions<S, C extends ReducerMap<S>> {
   name: string;
   initialState: S;
   reducers: C;
+  extraReducers?: (builder: ReducerBuilder<S>) => void;
 }
 
 /**
@@ -24,9 +25,9 @@ interface CreateSliceOptions<S, C extends SliceCaseReducerMap<S>> {
  * @template S The type of the slice state.
  * @template C The type of the case reducers, extending SliceCaseReducerMap<S>.
  */
-interface Slice<S, C extends SliceCaseReducerMap<S>> {
+interface Slice<S, C extends ReducerMap<S>> {
   name: string;
-  reducer: Reduce<S>;
+  reducer: StateReducerConfig<S>;
   actions: ActionCreatorsFromCaseReducers<C>;
 }
 
@@ -63,12 +64,12 @@ interface Slice<S, C extends SliceCaseReducerMap<S>> {
  * // Use the reducer
  * const nextState = reducer(currentState, increment())
  */
-export function createSlice<S, C extends SliceCaseReducerMap<S>>(
+export function createSlice<S, C extends ReducerMap<S>>(
   options: CreateSliceOptions<S, C>
 ): Slice<S, C> {
   const { name, initialState, reducers } = options;
-  const actionCreators: Record<string, ActionCreator<any>> = {};
-  const caseReducers: Record<string, CaseReducerFunction<S, Action>> = {};
+  const actionCreators: Record<string, CreateAction<any>> = {};
+  const caseReducers: Record<string, ActionHandler<S, Action>> = {};
 
   // Create action creators and case reducers
   Object.keys(reducers).forEach((key) => {
@@ -77,7 +78,7 @@ export function createSlice<S, C extends SliceCaseReducerMap<S>>(
     actionCreators[key] = ((payload?: any) => ({
       type: actionType,
       payload,
-    })) as ActionCreator<any>;
+    })) as CreateAction<any>;
   });
 
   // Create the main reducer function
@@ -94,4 +95,29 @@ export function createSlice<S, C extends SliceCaseReducerMap<S>>(
     reducer: { initialState, reducer },
     actions: actionCreators as ActionCreatorsFromCaseReducers<C>,
   };
+}
+
+class ReducerBuilder<State> {
+  private extraReducers: Record<string, ActionHandler<State, Action<any>>> =
+    {};
+
+  addCase<P = any>(
+    actionCreator: CreateAction<P>,
+    reducer: ActionHandler<State, Action<P>>
+  ): ReducerBuilder<State> {
+    const type = actionCreator({} as P).type;
+    this.extraReducers[type] = reducer;
+    return this;
+  }
+
+  build(): Record<string, ActionHandler<State, Action<any>>> {
+    return this.extraReducers;
+  }
+
+  addDefaultCase(
+    reducer: ActionHandler<State, Action<any>>
+  ): ReducerBuilder<State> {
+    this.extraReducers["DEFAULT"] = reducer;
+    return this;
+  }
 }

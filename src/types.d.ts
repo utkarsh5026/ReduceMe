@@ -20,7 +20,7 @@ type Action<T = any> = {
  * @param {Action} action The action to be processed.
  * @returns {T} The new state after processing the action.
  * @example
- * const counterReducer: Reducer<number> = (state, action) => {
+ * const counterReducer: StateReducer<number> = (state, action) => {
  *   switch (action.type) {
  *     case 'INCREMENT':
  *       return state + 1;
@@ -31,7 +31,7 @@ type Action<T = any> = {
  *   }
  * };
  */
-type Reducer<T> = (state: T | undefined, action: Action) => T;
+type StateReducer<T> = (state: T | undefined, action: Action) => T;
 
 /**
  * Represents a function that creates an action object.
@@ -39,12 +39,12 @@ type Reducer<T> = (state: T | undefined, action: Action) => T;
  * @returns {Action<P>} An action object with the appropriate type and payload.
  * @example
  * // Action creator without payload
- * const increment: ActionCreator = () => ({ type: 'INCREMENT' });
+ * const increment: CreateAction = () => ({ type: 'INCREMENT' });
  *
  * // Action creator with payload
- * const addTodo: ActionCreator<string> = (text) => ({ type: 'ADD_TODO', payload: text });
+ * const addTodo: CreateAction<string> = (text) => ({ type: 'ADD_TODO', payload: text });
  */
-type ActionCreator<P = void> = P extends void
+type CreateAction<P = void> = P extends void
   ? () => Action<void>
   : (payload: P) => Action<P>;
 
@@ -61,7 +61,7 @@ type ActionCreator<P = void> = P extends void
  *   draftState.todos.push({ id: Date.now(), text: incomingAction.payload, completed: false });
  * };
  */
-type CaseReducerFunction<StateType, ActionType extends Action> = (
+type ActionHandler<StateType, ActionType extends Action> = (
   draftState: Draft<StateType>,
   incomingAction: ActionType
 ) => void | StateType;
@@ -73,7 +73,7 @@ type CaseReducerFunction<StateType, ActionType extends Action> = (
  * @example
  * interface CounterState { value: number }
  *
- * const counterReducers: SliceCaseReducerMap<CounterState> = {
+ * const counterReducers: ReducerMap<CounterState> = {
  *   increment: (draftState) => { draftState.value += 1; },
  *   decrement: (draftState) => { draftState.value -= 1; },
  *   incrementByAmount: (draftState, incomingAction: Action<number>) => {
@@ -81,15 +81,15 @@ type CaseReducerFunction<StateType, ActionType extends Action> = (
  *   },
  * };
  */
-type SliceCaseReducerMap<SliceState> = {
-  [actionType: string]: CaseReducerFunction<SliceState, Action<any>>;
+type ReducerMap<State> = {
+  [actionType: string]: ActionHandler<State, Action<any>>;
 };
 
 /**
  * Represents a listener function that is called when the state changes.
  * This function takes no arguments and returns nothing.
  */
-type Listener = () => void;
+type StateChangeListener = () => void;
 
 /**
  * Generates a map of action creators from a given SliceCaseReducerMap.
@@ -110,26 +110,26 @@ type Listener = () => void;
  * //   addAmount: ActionCreator<number>
  * // }
  */
-type ActionCreatorsFromCaseReducers<C extends SliceCaseReducerMap<any>> = {
+type ActionCreatorsFromCaseReducers<C extends ReducerMap<any>> = {
   [K in keyof C]: C[K] extends (state: any, action: infer A) => any
     ? A extends Action<infer P>
-      ? ActionCreator<P>
-      : ActionCreator<void>
-    : ActionCreator<void>;
+      ? CreateAction<P>
+      : CreateAction<void>
+    : CreateAction<void>;
 };
 
 type Middleware<State = any> = (
   store: MiddlewareAPI<State>
-) => (next: Dispatch) => (action: Action<any>) => void;
+) => (next: DispatchAction) => (action: Action<any>) => void;
 
 interface MiddlewareAPI<State> {
   state(): State;
   dispatch(action: Action<any>): void;
 }
 
-type Dispatch = (action: Action<any>) => void;
+type DispatchAction = (action: Action<any>) => void;
 
-interface Reduce<State> {
+interface StateReducerConfig<State> {
   initialState: State;
-  reducer: Reducer<State>;
+  reducer: StateReducer<State>;
 }

@@ -1,4 +1,4 @@
-import { Action, ActionCreator } from "./types";
+import { Action, CreateAction } from "./types";
 
 /**
  * Creates an action creator function.
@@ -6,9 +6,9 @@ import { Action, ActionCreator } from "./types";
  * @param type The action type
  * @returns An action creator function
  */
-export function createAction<P = void>(type: string): ActionCreator<P> {
+export function createAction<P = void>(type: string): CreateAction<P> {
   return ((payload?: P) =>
-    ({ type, payload } as Action<P>)) as ActionCreator<P>;
+    ({ type, payload } as Action<P>)) as CreateAction<P>;
 }
 
 /**
@@ -19,7 +19,7 @@ export function createAction<P = void>(type: string): ActionCreator<P> {
  */
 export function createActionWithType<P = void>(
   type: string
-): { actionCreator: ActionCreator<P>; type: string } {
+): { actionCreator: CreateAction<P>; type: string } {
   return {
     actionCreator: createAction<P>(type),
     type,
@@ -34,8 +34,8 @@ export function createActionWithType<P = void>(
  */
 export function createActions<T extends Record<string, string>>(
   actionTypes: T
-): { [K in keyof T]: ActionCreator<any> } {
-  const actionCreators: { [K in keyof T]: ActionCreator<any> } = {} as any;
+): { [K in keyof T]: CreateAction<any> } {
+  const actionCreators: { [K in keyof T]: CreateAction<any> } = {} as any;
 
   Object.entries(actionTypes).forEach(([key, type]) => {
     actionCreators[key as keyof T] = createAction(type);
@@ -61,7 +61,7 @@ export function createActions<T extends Record<string, string>>(
  * }
  */
 export function isActionOf<P = any>(
-  actionCreator: ActionCreator<P>
+  actionCreator: CreateAction<P>
 ): (action: Action<any>) => action is Action<P> {
   return (action: Action<any>): action is Action<P> =>
     action.type === (actionCreator({} as P) as Action<P>).type;

@@ -1,14 +1,14 @@
 import type {
-  Reduce,
-  Listener,
+  StateReducerConfig,
+  StateChangeListener,
   Action,
-  Reducer,
+  StateReducer,
   Middleware,
   MiddlewareAPI,
-  Dispatch,
+  DispatchAction,
 } from "./types";
 
-type ReducersMapObject = { [key: string]: Reduce<any> };
+type ReducersMapObject = { [key: string]: StateReducerConfig<any> };
 
 /**
  * Represents a Redux-like store that manages application state.
@@ -16,9 +16,9 @@ type ReducersMapObject = { [key: string]: Reduce<any> };
  */
 export class Store<State> {
   private _state: State;
-  private readonly _reducer: Reducer<State>;
-  private readonly _dispatch: Dispatch;
-  private _listeners: Set<Listener> = new Set();
+  private readonly _reducer: StateReducer<State>;
+  private readonly _dispatch: DispatchAction;
+  private _listeners: Set<StateChangeListener> = new Set();
   private _isDispatching = false;
 
   /**
@@ -29,7 +29,7 @@ export class Store<State> {
    * @private
    */
   private constructor(
-    reducer: Reducer<State>,
+    reducer: StateReducer<State>,
     initialState: State,
     middlewares: Middleware<State>[] = []
   ) {
@@ -85,7 +85,7 @@ export class Store<State> {
    * @param listener The listener function to register.
    * @returns A function to unregister the listener.
    */
-  registerListener(listener: Listener): () => void {
+  registerListener(listener: StateChangeListener): () => void {
     this._listeners.add(listener);
     return () => {
       this._listeners.delete(listener);
@@ -169,7 +169,7 @@ export class Store<State> {
    *
    * this._applyMiddleware([loggerMiddleware]);
    */
-  private _applyMiddleware(middlewares: Middleware<State>[]): Dispatch {
+  private _applyMiddleware(middlewares: Middleware<State>[]): DispatchAction {
     const store: MiddlewareAPI<State> = {
       state: this.state.bind(this),
       dispatch: (action: Action) => this._dispatch(action),
@@ -196,8 +196,8 @@ export class Store<State> {
  */
 export function combineReducers<M extends ReducersMapObject>(
   reducers: M
-): Reducer<{
-  [K in keyof M]: M[K] extends Reduce<infer S> ? S : never;
+): StateReducer<{
+  [K in keyof M]: M[K] extends StateReducerConfig<infer S> ? S : never;
 }> {
   return (state: any = {}, action: Action<any>) => {
     const nextState: any = {};
