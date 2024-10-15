@@ -92,25 +92,25 @@ type ReducerMap<State> = {
 type StateChangeListener = () => void;
 
 /**
- * Generates a map of action creators from a given SliceCaseReducerMap.
+ * Generates a map of action creators from a given ReducerMap.
  * This type maps each key in the reducer map to an ActionCreator with the appropriate payload type.
  *
- * @template C The type of the SliceCaseReducerMap.
+ * @template C The type of the ReducerMap.
  *
  * @example
- * const reducers: SliceCaseReducerMap<MyState> = {
+ * const reducers: ReducerMap<MyState> = {
  *   increment: (state) => { state.value++ },
  *   addAmount: (state, action: Action<number>) => { state.value += action.payload }
  * };
  *
- * type MyActionCreators = ActionCreatorsFromCaseReducers<typeof reducers>;
+ * type MyActionCreators = GenerateActionCreators<typeof reducers>;
  * // Result:
  * // {
  * //   increment: ActionCreator<void>,
  * //   addAmount: ActionCreator<number>
  * // }
  */
-type ActionCreatorsFromCaseReducers<C extends ReducerMap<any>> = {
+type GenerateActionCreators<C extends ReducerMap<any>> = {
   [K in keyof C]: C[K] extends (state: any, action: infer A) => any
     ? A extends Action<infer P>
       ? CreateAction<P>

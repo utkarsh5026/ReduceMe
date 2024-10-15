@@ -4,7 +4,7 @@ import type {
   CreateAction,
   ActionHandler,
   ReducerMap,
-  ActionCreatorsFromCaseReducers,
+  GenerateActionCreators,
   StateReducerConfig,
 } from "./types";
 
@@ -28,7 +28,7 @@ interface CreateSliceOptions<S, C extends ReducerMap<S>> {
 interface Slice<S, C extends ReducerMap<S>> {
   name: string;
   reducer: StateReducerConfig<S>;
-  actions: ActionCreatorsFromCaseReducers<C>;
+  actions: GenerateActionCreators<C>;
 }
 
 /**
@@ -93,7 +93,7 @@ export function createSlice<S, C extends ReducerMap<S>>(
   return {
     name,
     reducer: { initialState, reducer },
-    actions: actionCreators as ActionCreatorsFromCaseReducers<C>,
+    actions: actionCreators as GenerateActionCreators<C>,
   };
 }
 
